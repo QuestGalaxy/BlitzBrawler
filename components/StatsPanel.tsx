@@ -19,22 +19,26 @@ export default function StatsPanel({ character }: { character: Character | null 
   }
 
   const { stats } = character;
-  const getTraitValue = (label: string, fallback: number) => {
-    const trait = character.attributes.find(
-      (item) => item.trait_type.toLowerCase() === label.toLowerCase()
-    );
+  const normalizeKey = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const getTraitValue = (labels: string[], fallback: number) => {
+    const normalizedLabels = labels.map(normalizeKey);
+    const trait = character.attributes.find((item) => {
+      const key = normalizeKey(item.trait_type);
+      return normalizedLabels.some((label) => key === label || key.includes(label));
+    });
     if (!trait) return fallback;
     const parsed = Number.parseFloat(String(trait.value).replace(/[^0-9.]/g, ""));
     return Number.isNaN(parsed) ? fallback : parsed;
   };
 
   const traitStats = {
-    power: getTraitValue("Power", stats.power),
-    speed: getTraitValue("Speed", stats.speed),
-    strength: getTraitValue("Strength", stats.strength),
-    agility: getTraitValue("Agility", stats.agility),
-    control: getTraitValue("Control", stats.control),
-    stamina: getTraitValue("Stamina", stats.stamina),
+    power: getTraitValue(["Power"], stats.power),
+    speed: getTraitValue(["Speed"], stats.speed),
+    strength: getTraitValue(["Strength"], stats.strength),
+    agility: getTraitValue(["Agility"], stats.agility),
+    control: getTraitValue(["Control", "Skill"], stats.control),
+    stamina: getTraitValue(["Stamina", "Endurance"], stats.stamina),
   };
 
   const statConfig = [

@@ -21,10 +21,21 @@ export default function HomePage() {
             </div>
             
             <h1 className="text-6xl md:text-9xl font-heading uppercase italic tracking-tighter leading-[0.85] mb-8 text-white">
-              Blitz <br />
-              <span className="text-brand-gold">Brawler</span> <br />
-              Arena
+              Blitz <span className="text-brand-gold">Brawler</span> Arena
             </h1>
+
+            <div className="mt-6 mb-6 block lg:hidden">
+              <div className="relative aspect-square w-full max-w-xs mx-auto">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-gold/10 rounded-full blur-[120px]" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/characters/BlitzLogo.gif" 
+                  alt="Hero Player"
+                  className="relative z-20 w-full h-full object-contain animate-float"
+                  style={{ filter: "drop-shadow(0 20px 50px rgba(0,0,0,0.5))" }}
+                />
+              </div>
+            </div>
 
             <p className="text-slate-400 text-lg max-w-lg mb-10 leading-relaxed">
               Experience the next generation of football auto-battlers. 
@@ -44,13 +55,13 @@ export default function HomePage() {
           </div>
 
           {/* Decorative Elements / Character Preview */}
-          <div className="hidden lg:block relative">
+          <div className="relative hidden lg:block">
             <div className="absolute inset-0 bg-gradient-to-r from-brand-navy to-transparent z-10" />
             <div className="relative aspect-square">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-gold/10 rounded-full blur-[120px]" />
                {/* eslint-disable-next-line @next/next/no-img-element */}
                <img 
-                 src="/characters/vega-striker.svg" 
+                 src="/characters/BlitzLogo.gif" 
                  alt="Hero Player"
                  className="relative z-20 w-full h-full object-contain animate-float"
                  style={{ filter: "drop-shadow(0 20px 50px rgba(0,0,0,0.5))" }}

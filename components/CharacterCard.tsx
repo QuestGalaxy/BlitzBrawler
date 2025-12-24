@@ -13,16 +13,20 @@ export default function CharacterCard({
   onSelect: (character: Character) => void;
 }) {
   const isPrestige = character.source === "wallet";
-  const getTraitNumber = (label: string, fallback: number) => {
-    const trait = character.attributes.find(
-      (item) => item.trait_type.toLowerCase() === label.toLowerCase()
-    );
+  const normalizeKey = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const getTraitNumber = (labels: string[], fallback: number) => {
+    const normalizedLabels = labels.map(normalizeKey);
+    const trait = character.attributes.find((item) => {
+      const key = normalizeKey(item.trait_type);
+      return normalizedLabels.some((label) => key === label || key.includes(label));
+    });
     if (!trait) return fallback;
     const parsed = Number.parseFloat(String(trait.value).replace(/[^0-9.]/g, ""));
     return Number.isNaN(parsed) ? fallback : parsed;
   };
 
-  const overall = Math.round(getTraitNumber("Overall", character.stats.power));
+  const overall = Math.round(getTraitNumber(["Overall", "OVR", "Rating"], character.stats.power));
   
   const getRarityStyles = () => {
     const r = character.rarity.toLowerCase();

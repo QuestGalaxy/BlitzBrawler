@@ -2,7 +2,7 @@
   {
     "id": "public-01",
     "name": "Vega Striker",
-    "image": "/characters/vega-striker.svg",
+    "image": "/characters/BlitzLogo.gif",
     "attributes": [
       { "trait_type": "Rarity", "value": "Rare" },
       { "trait_type": "Speed", "value": "88" },
