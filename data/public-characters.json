@@ -1,0 +1,80 @@
+[
+  {
+    "id": "public-01",
+    "name": "Vega Striker",
+    "image": "/characters/vega-striker.svg",
+    "attributes": [
+      { "trait_type": "Rarity", "value": "Rare" },
+      { "trait_type": "Speed", "value": "88" },
+      { "trait_type": "Strength", "value": "74" },
+      { "trait_type": "Agility", "value": "92" },
+      { "trait_type": "Background", "value": "Neon Bowl" },
+      { "trait_type": "Origin", "value": "Rookie" }
+    ]
+  },
+  {
+    "id": "public-02",
+    "name": "Atlas Keeper",
+    "image": "/characters/atlas-keeper.svg",
+    "attributes": [
+      { "trait_type": "Rarity", "value": "Epic" },
+      { "trait_type": "Speed", "value": "72" },
+      { "trait_type": "Strength", "value": "90" },
+      { "trait_type": "Agility", "value": "68" },
+      { "trait_type": "Background", "value": "Steel Dome" },
+      { "trait_type": "Origin", "value": "Core" }
+    ]
+  },
+  {
+    "id": "public-03",
+    "name": "Pulse Winger",
+    "image": "/characters/pulse-winger.svg",
+    "attributes": [
+      { "trait_type": "Rarity", "value": "Uncommon" },
+      { "trait_type": "Speed", "value": "94" },
+      { "trait_type": "Strength", "value": "65" },
+      { "trait_type": "Agility", "value": "90" },
+      { "trait_type": "Background", "value": "Aurora Pitch" },
+      { "trait_type": "Origin", "value": "Genesis" }
+    ]
+  },
+  {
+    "id": "public-04",
+    "name": "Forge Captain",
+    "image": "/characters/forge-captain.svg",
+    "attributes": [
+      { "trait_type": "Rarity", "value": "Legendary" },
+      { "trait_type": "Speed", "value": "70" },
+      { "trait_type": "Strength", "value": "96" },
+      { "trait_type": "Agility", "value": "78" },
+      { "trait_type": "Background", "value": "Inferno Arena" },
+      { "trait_type": "Origin", "value": "Early" }
+    ]
+  },
+  {
+    "id": "public-05",
+    "name": "Nova Sweeper",
+    "image": "/characters/nova-sweeper.svg",
+    "attributes": [
+      { "trait_type": "Rarity", "value": "Rare" },
+      { "trait_type": "Speed", "value": "82" },
+      { "trait_type": "Strength", "value": "80" },
+      { "trait_type": "Agility", "value": "84" },
+      { "trait_type": "Background", "value": "Skyline Court" },
+      { "trait_type": "Origin", "value": "Core" }
+    ]
+  },
+  {
+    "id": "public-06",
+    "name": "Rift Playmaker",
+    "image": "/characters/rift-playmaker.svg",
+    "attributes": [
+      { "trait_type": "Rarity", "value": "Epic" },
+      { "trait_type": "Speed", "value": "86" },
+      { "trait_type": "Strength", "value": "78" },
+      { "trait_type": "Agility", "value": "88" },
+      { "trait_type": "Background", "value": "Quantum Turf" },
+      { "trait_type": "Origin", "value": "Genesis" }
+    ]
+  }
+]
