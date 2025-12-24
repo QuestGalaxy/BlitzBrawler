@@ -62,6 +62,7 @@ export type WalletState = {
 export type MatchEvent = {
   time: number;
   team: "player" | "ai";
+  kind: "goal" | "save" | "miss";
 };
 
 export type MatchResult = {

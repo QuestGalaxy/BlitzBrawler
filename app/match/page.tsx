@@ -5,15 +5,16 @@ import { useRouter } from "next/navigation";
 import TopNav from "@/components/TopNav";
 import ArenaCanvas from "@/components/ArenaCanvas";
 import { useGame } from "@/lib/game-context";
-import { MatchEvent, MatchResult, Visuals } from "@/lib/types";
+import { Character, MatchEvent, MatchResult, Visuals } from "@/lib/types";
 import { computeStats, deriveVisuals, getLevelFromXp } from "@/lib/traits";
 import { simulateMatch } from "@/game/simulateMatch";
-import { Zap, Target, Loader2, Activity } from "lucide-react";
+import { Zap, Target, Loader2, Activity, Shield, X, Goal } from "lucide-react";
 
 export default function MatchPage() {
   const router = useRouter();
   const { selectedCharacter, progress, setProgress, setLastMatch } = useGame();
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
+  const [matchCharacter, setMatchCharacter] = useState<Character | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [score, setScore] = useState({ player: 0, ai: 0 });
   const [message, setMessage] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export default function MatchPage() {
     );
     const boostedCharacter = { ...selectedCharacter, stats, visuals, rarity };
     setArenaVisuals(visuals);
+    setMatchCharacter(boostedCharacter);
     const result = simulateMatch(boostedCharacter, progressRef.current);
     setMatchResult(result);
     eventsRef.current = result.events;
@@ -67,12 +69,22 @@ export default function MatchPage() {
       const currentEvent = eventsRef.current[eventIndexRef.current];
       if (currentEvent && seconds >= currentEvent.time) {
         eventIndexRef.current += 1;
-        setGoalPulse((pulse) => pulse + 1);
-        setMessage(currentEvent.team === "player" ? "GOAL!" : "BLOCKED!");
-        setScore((prev) => ({
-          player: prev.player + (currentEvent.team === "player" ? 1 : 0),
-          ai: prev.ai + (currentEvent.team === "ai" ? 1 : 0),
-        }));
+        if (currentEvent.kind === "goal") {
+          setGoalPulse((pulse) => pulse + 1);
+        }
+        if (currentEvent.kind === "goal") {
+          setMessage("GOAL!");
+        } else if (currentEvent.kind === "save") {
+          setMessage("SAVED!");
+        } else {
+          setMessage("MISS!");
+        }
+        if (currentEvent.kind === "goal") {
+          setScore((prev) => ({
+            player: prev.player + (currentEvent.team === "player" ? 1 : 0),
+            ai: prev.ai + (currentEvent.team === "ai" ? 1 : 0),
+          }));
+        }
         if (messageTimeoutRef.current) {
           clearTimeout(messageTimeoutRef.current);
         }
@@ -114,7 +126,7 @@ export default function MatchPage() {
     };
   }, [matchResult, progress, router, setLastMatch, setProgress]);
 
-  if (!selectedCharacter || !matchResult) {
+  if (!selectedCharacter || !matchResult || !matchCharacter) {
     return (
       <main className="min-h-screen">
         <TopNav />
@@ -130,6 +142,78 @@ export default function MatchPage() {
   }
 
   const percent = Math.min((elapsed / matchResult.duration) * 100, 100);
+  const normalizeKey = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const getTraitNumber = (labels: string[], fallback: number) => {
+    const normalizedLabels = labels.map(normalizeKey);
+    const trait = matchCharacter.attributes.find((item) => {
+      const key = normalizeKey(item.trait_type);
+      return normalizedLabels.some((label) => key === label || key.includes(label));
+    });
+    if (!trait) return fallback;
+    const parsed = Number.parseFloat(String(trait.value).replace(/[^0-9.]/g, ""));
+    return Number.isNaN(parsed) ? fallback : parsed;
+  };
+  const overall = Math.round(
+    getTraitNumber(["Overall", "OVR", "Rating", "Power"], matchCharacter.stats.power)
+  );
+
+  const feedCopy = {
+    player: {
+      goal: [
+        "Precision strike finds the net.",
+        "A dazzling combo ends in a finish.",
+        "Blitz timing breaks the defense.",
+      ],
+      save: [
+        "Shot on target, but it's denied.",
+        "Keeper shuts down the lane.",
+        "A strong save keeps it level.",
+      ],
+      miss: [
+        "Too much power — it sails wide.",
+        "Shot clips the post and out.",
+        "Rushed attempt misses the frame.",
+      ],
+    },
+    ai: {
+      goal: [
+        "Opponent breaks through the defense.",
+        "AI counter opens the goal.",
+        "A sudden strike beats the line.",
+      ],
+      save: [
+        "Your keeper keeps it out.",
+        "A clutch save denies the AI.",
+        "Defense blocks the shot on target.",
+      ],
+      miss: [
+        "AI spray shot goes wide.",
+        "Opponent mistimes the finish.",
+        "Shot flies over the bar.",
+      ],
+    },
+  };
+  const feedStyle = {
+    goal: {
+      label: "Goal",
+      icon: Goal,
+      color: "text-brand-gold",
+      chip: "bg-brand-gold/10 border-brand-gold/40",
+    },
+    save: {
+      label: "Saved",
+      icon: Shield,
+      color: "text-blue-300",
+      chip: "bg-blue-500/10 border-blue-500/40",
+    },
+    miss: {
+      label: "Miss",
+      icon: X,
+      color: "text-slate-400",
+      chip: "bg-white/5 border-white/10",
+    },
+  };
 
   return (
     <main className="min-h-screen pb-24 md:pb-0">
@@ -140,8 +224,8 @@ export default function MatchPage() {
           <div className="lg:col-span-8 space-y-6">
             <div className="relative aspect-video rounded-lg overflow-hidden border border-white/10 shadow-2xl bg-black">
               <ArenaCanvas
-                aura={(arenaVisuals ?? selectedCharacter.visuals).aura}
-                stadium={(arenaVisuals ?? selectedCharacter.visuals).stadium}
+                aura={(arenaVisuals ?? matchCharacter.visuals).aura}
+                stadium={(arenaVisuals ?? matchCharacter.visuals).stadium}
                 goalPulse={goalPulse}
               />
               
@@ -188,7 +272,7 @@ export default function MatchPage() {
                   <div className="bg-white/5 p-2 rounded"><Zap size={20} className="text-brand-gold" /></div>
                   <div>
                     <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Team Rating</div>
-                    <div className="text-2xl font-heading italic">{Math.round(selectedCharacter.stats.power)} OVR</div>
+                    <div className="text-2xl font-heading italic">{overall} OVR</div>
                   </div>
                </div>
                <div className="fifa-panel py-4 px-6 flex items-center gap-4">
@@ -218,6 +302,12 @@ export default function MatchPage() {
               <div className="flex-1 space-y-4 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
                 {matchResult.events.map((event, index) => {
                    const isPast = elapsed >= event.time;
+                   const teamKey = event.team === "player" ? "player" : "ai";
+                   const kindKey = event.kind;
+                   const kindStyle = feedStyle[kindKey];
+                   const copyList = feedCopy[teamKey][kindKey];
+                   const copy = copyList[index % copyList.length];
+                   const KindIcon = kindStyle.icon;
                    return (
                     <div 
                       key={`${event.time}-${index}`} 
@@ -228,9 +318,15 @@ export default function MatchPage() {
                         <div className="text-[11px] font-bold uppercase tracking-widest mb-1 text-white/60">
                           {event.team === "player" ? "Squad Action" : "Opponent Action"}
                         </div>
-                        <div className="text-sm font-medium">
-                          {event.team === "player" ? "Dynamic offensive maneuver successful." : "Defensive breach detected by AI unit."}
+                        <div className="mb-2">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${kindStyle.chip} ${kindStyle.color}`}
+                          >
+                            <KindIcon size={12} />
+                            {kindStyle.label}
+                          </span>
                         </div>
+                        <div className="text-sm font-medium">{copy}</div>
                       </div>
                     </div>
                   );
