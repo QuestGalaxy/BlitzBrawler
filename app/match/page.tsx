@@ -142,6 +142,15 @@ export default function MatchPage() {
   }
 
   const percent = Math.min((elapsed / matchResult.duration) * 100, 100);
+  const opponentImages = [
+    "/characters/atlas-keeper.svg",
+    "/characters/forge-captain.svg",
+    "/characters/nova-sweeper.svg",
+    "/characters/pulse-winger.svg",
+    "/characters/rift-playmaker.svg",
+  ];
+  const hashId = matchCharacter.id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const opponentImage = opponentImages[hashId % opponentImages.length];
   const normalizeKey = (value: string) =>
     value.toLowerCase().replace(/[^a-z0-9]/g, "");
   const getTraitNumber = (labels: string[], fallback: number) => {
@@ -227,6 +236,10 @@ export default function MatchPage() {
                 aura={(arenaVisuals ?? matchCharacter.visuals).aura}
                 stadium={(arenaVisuals ?? matchCharacter.visuals).stadium}
                 goalPulse={goalPulse}
+                playerImage={matchCharacter.image}
+                opponentImage={opponentImage}
+                events={matchResult.events}
+                elapsed={elapsed}
               />
               
               <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-1">
