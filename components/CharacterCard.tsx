@@ -31,19 +31,19 @@ export default function CharacterCard({
       }`}
     >
       <div 
-        className={`w-full aspect-[2/3] relative rounded-lg overflow-hidden border-2 shadow-2xl transition-all ${
+        className={`w-full aspect-square relative rounded-lg overflow-hidden border-2 shadow-2xl transition-all ${
           selected ? "ring-4 ring-white ring-offset-4 ring-offset-background" : "border-opacity-30"
         } ${getRarityStyles()}`}
       >
         <div className={`absolute inset-0 bg-gradient-to-br opacity-90 ${getRarityStyles()}`} />
         <div className="absolute inset-0 bg-noise pointer-events-none" />
 
-        <div className="absolute inset-x-0 bottom-0 h-4/5 flex items-end justify-center pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={character.image}
             alt={character.name}
-            className="h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-110"
+            className="h-full w-full object-cover filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-110"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/characters/placeholder.svg";
             }}
