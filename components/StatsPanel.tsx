@@ -19,14 +19,31 @@ export default function StatsPanel({ character }: { character: Character | null 
   }
 
   const { stats } = character;
+  const getTraitValue = (label: string, fallback: number) => {
+    const trait = character.attributes.find(
+      (item) => item.trait_type.toLowerCase() === label.toLowerCase()
+    );
+    if (!trait) return fallback;
+    const parsed = Number.parseFloat(String(trait.value).replace(/[^0-9.]/g, ""));
+    return Number.isNaN(parsed) ? fallback : parsed;
+  };
+
+  const traitStats = {
+    power: getTraitValue("Power", stats.power),
+    speed: getTraitValue("Speed", stats.speed),
+    strength: getTraitValue("Strength", stats.strength),
+    agility: getTraitValue("Agility", stats.agility),
+    control: getTraitValue("Control", stats.control),
+    stamina: getTraitValue("Stamina", stats.stamina),
+  };
 
   const statConfig = [
-    { label: "Power", value: stats.power, icon: Zap, color: "bg-brand-gold" },
-    { label: "Speed", value: stats.speed, icon: Wind, color: "bg-blue-400" },
-    { label: "Strength", value: stats.strength, icon: Shield, color: "bg-red-400" },
-    { label: "Agility", value: stats.agility, icon: Activity, color: "bg-green-400" },
-    { label: "Control", value: stats.control, icon: Target, color: "bg-purple-400" },
-    { label: "Stamina", value: stats.stamina, icon: Brain, color: "bg-amber-400" },
+    { label: "Power", value: traitStats.power, icon: Zap, color: "bg-brand-gold" },
+    { label: "Speed", value: traitStats.speed, icon: Wind, color: "bg-blue-400" },
+    { label: "Strength", value: traitStats.strength, icon: Shield, color: "bg-red-400" },
+    { label: "Agility", value: traitStats.agility, icon: Activity, color: "bg-green-400" },
+    { label: "Control", value: traitStats.control, icon: Target, color: "bg-purple-400" },
+    { label: "Stamina", value: traitStats.stamina, icon: Brain, color: "bg-amber-400" },
   ];
 
   return (
@@ -54,7 +71,7 @@ export default function StatsPanel({ character }: { character: Character | null 
             </div>
           </div>
           <div className="text-right">
-             <div className="text-4xl font-heading text-brand-gold italic">{formatStat(stats.power)}</div>
+             <div className="text-4xl font-heading text-brand-gold italic">{formatStat(traitStats.power)}</div>
              <div className="text-[10px] font-bold opacity-40 uppercase tracking-widest">Rating</div>
           </div>
         </div>
