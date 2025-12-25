@@ -23,7 +23,7 @@ export default function SelectPage() {
   const [guestMetadata, setGuestMetadata] = useState<{ tokenId: string; data: RawMetadata }[]>([]);
   const [loadingGuest, setLoadingGuest] = useState(false);
   const [guestError, setGuestError] = useState<string | null>(null);
-  const sampleCacheKey = "blitzbrawler:public-sample";
+  const sampleCacheKey = "blitzbrawler:public-sample-v12";
 
   const guestCharacters = useMemo(() => {
     return guestMetadata
@@ -71,6 +71,7 @@ export default function SelectPage() {
       setGuestError(null);
       try {
         const metadata = await fetchSampleMetadata(12);
+        console.log("Fetched guest metadata:", metadata.length);
         if (mounted) {
           setGuestMetadata(metadata);
           if (typeof window !== "undefined") {
@@ -102,7 +103,7 @@ export default function SelectPage() {
       setWalletError(null);
       try {
         const metadata = await fetchOwnedMetadata(walletSession.provider, wallet.address as string);
-        const mapped = metadata.slice(0, 10).map(({ tokenId, data }) =>
+        const mapped = metadata.slice(0, 12).map(({ tokenId, data }) =>
           mapMetadataToCharacter(`wallet-${tokenId}`, data, "wallet", tokenId, progress.upgrades)
         );
         if (mounted) {
@@ -234,7 +235,7 @@ export default function SelectPage() {
 
             {(loadingGuest || loadingWallet) && characters.length === 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 opacity-40 pointer-events-none">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
                   <div key={i} className="aspect-[2/3] bg-slate-800 animate-pulse rounded-lg" />
                 ))}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
