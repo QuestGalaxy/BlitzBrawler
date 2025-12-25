@@ -249,33 +249,52 @@ async function scanTokensFromTransfers(owner: string) {
   const readProvider = getReadProvider();
   const currentBlock = await readProvider.getBlockNumber();
   const startBlock = Number(process.env.NEXT_PUBLIC_NFT_START_BLOCK || 0);
-  const owned = new Set<string>();
-  const sent = new Set<string>();
   const iface = new ethers.Interface(ERC721_ABI);
   const transferEvent = iface.getEvent("Transfer");
   if (!transferEvent) return [];
   const transferTopic = transferEvent.topicHash;
+  const normalizedOwner = ethers.getAddress(owner);
+  const ownerTopic = ethers.zeroPadValue(normalizedOwner, 32);
+  const logs: ethers.Log[] = [];
 
-  await getLogsAdaptive({
-    provider: readProvider,
-    address: NFT_CONTRACT,
-    topics: [transferTopic],
-    fromBlock: startBlock,
-    toBlock: currentBlock,
-    onLogs: (logs) => {
-      logs.forEach((log) => {
-        const parsed = iface.parseLog(log);
-        if (!parsed) return;
-        const fromAddress = String(parsed.args.from).toLowerCase();
-        const toAddress = String(parsed.args.to).toLowerCase();
-        const tokenId = String(parsed.args.tokenId);
-        if (toAddress === owner.toLowerCase()) owned.add(tokenId);
-        if (fromAddress === owner.toLowerCase()) sent.add(tokenId);
-      });
-    },
+  const collectLogs = async (topics: Array<string | Array<string> | null>) => {
+    await getLogsAdaptive({
+      provider: readProvider,
+      address: NFT_CONTRACT,
+      topics,
+      fromBlock: startBlock,
+      toBlock: currentBlock,
+      onLogs: (batch) => {
+        logs.push(...batch);
+      },
+    });
+  };
+
+  await collectLogs([transferTopic, null, ownerTopic]);
+  await collectLogs([transferTopic, ownerTopic, null]);
+
+  logs.sort((a, b) => {
+    const blockDiff = (a.blockNumber ?? 0) - (b.blockNumber ?? 0);
+    if (blockDiff !== 0) return blockDiff;
+    const aIndex =
+      "index" in a ? a.index : (a as { logIndex?: number }).logIndex ?? 0;
+    const bIndex =
+      "index" in b ? b.index : (b as { logIndex?: number }).logIndex ?? 0;
+    return aIndex - bIndex;
   });
 
-  sent.forEach((tokenId) => owned.delete(tokenId));
+  const owned = new Set<string>();
+  const ownerLower = normalizedOwner.toLowerCase();
+  logs.forEach((log) => {
+    const parsed = iface.parseLog(log);
+    if (!parsed) return;
+    const fromAddress = String(parsed.args.from).toLowerCase();
+    const toAddress = String(parsed.args.to).toLowerCase();
+    const tokenId = String(parsed.args.tokenId);
+    if (toAddress === ownerLower) owned.add(tokenId);
+    if (fromAddress === ownerLower) owned.delete(tokenId);
+  });
+
   return Array.from(owned.values());
 }
 
