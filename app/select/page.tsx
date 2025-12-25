@@ -232,7 +232,7 @@ export default function SelectPage() {
               </div>
             )}
 
-            {(loadingGuest || loadingWallet) && (
+            {(loadingGuest || loadingWallet) && characters.length === 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 opacity-40 pointer-events-none">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="aspect-[2/3] bg-slate-800 animate-pulse rounded-lg" />

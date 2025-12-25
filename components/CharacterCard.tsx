@@ -1,7 +1,8 @@
 "use client";
 
 import { Character } from "@/lib/types";
-import { Zap } from "lucide-react";
+import { Zap, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 export default function CharacterCard({
   character,
@@ -12,6 +13,7 @@ export default function CharacterCard({
   selected: boolean;
   onSelect: (character: Character) => void;
 }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
   const isPrestige = character.source === "wallet";
   const normalizeKey = (value: string) =>
     value.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -52,13 +54,22 @@ export default function CharacterCard({
         <div className="absolute inset-0 bg-noise pointer-events-none" />
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          {!imageLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
+              <Loader2 className="w-8 h-8 text-white/50 animate-spin" />
+            </div>
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={character.image}
             alt={character.name}
-            className="h-full w-full object-cover filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-110"
+            onLoad={() => setImageLoaded(true)}
+            className={`h-full w-full object-cover filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)] transition-all duration-500 ${
+              imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+            } group-hover:scale-110`}
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/characters/placeholder.svg";
+              setImageLoaded(true);
             }}
           />
         </div>
