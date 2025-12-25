@@ -13,14 +13,14 @@ type TabSwitchProps = {
 
 export default function TabSwitch({ value, onChange, options }: TabSwitchProps) {
   return (
-    <div className="flex gap-2 p-1 bg-slate-900/80 border border-white/10 backdrop-blur-md rounded-lg h-14 relative overflow-hidden shadow-xl">
+    <div className="flex gap-2 p-1 bg-slate-900/80 border border-white/10 backdrop-blur-md rounded-lg h-14 relative overflow-x-auto overflow-y-hidden shadow-xl min-w-fit no-scrollbar">
       {options.map((option) => {
         const isActive = value === option.key;
         return (
           <button
             key={option.key}
             onClick={() => onChange(option.key)}
-            className={`flex-1 relative z-10 font-heading text-lg uppercase italic transition-all duration-300
+            className={`flex-1 relative z-10 font-heading text-lg uppercase italic transition-all duration-300 px-6 min-w-[140px] md:min-w-[180px] whitespace-nowrap
               ${isActive ? "text-black" : "text-white/40 hover:text-white"}`}
           >
             {option.label}
