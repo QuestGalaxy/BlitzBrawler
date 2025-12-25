@@ -48,7 +48,7 @@ export function loadProgress(address?: string | null): Progress {
       ...parsed,
       level,
     };
-  } catch (error) {
+  } catch {
     return defaultProgress();
   }
 }

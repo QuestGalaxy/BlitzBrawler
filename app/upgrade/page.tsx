@@ -121,7 +121,7 @@ export default function UpgradePage() {
                           </div>
                        </div>
                        <button
-                         onClick={() => upgradeStat(upgrade.key as any)}
+                         onClick={() => upgradeStat(upgrade.key as "power" | "speed" | "strength" | "agility")}
                          disabled={availablePoints <= 0}
                          className={`fifa-button !px-6 !py-2 !text-xs ${availablePoints <= 0 ? "opacity-20" : ""}`}
                        >

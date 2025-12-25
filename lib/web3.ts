@@ -1,5 +1,4 @@
 import { ethers } from "ethers";
-import EthereumProvider from "@walletconnect/ethereum-provider";
 import { RawMetadata } from "./characters";
 
 export const POLYGON_CHAIN_ID = 137;
@@ -20,6 +19,7 @@ const ERC721_ABI = [
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ethereum?: any;
   }
 }
@@ -28,6 +28,7 @@ export type WalletSession = {
   address: string;
   chainId: number;
   provider: ethers.BrowserProvider;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawProvider: any;
   providerType: "injected" | "walletconnect";
 };
@@ -36,6 +37,7 @@ export function getReadProvider() {
   return new ethers.JsonRpcProvider(POLYGON_RPC);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function switchNetwork(rawProvider: any) {
   if (!rawProvider) return;
   try {
@@ -43,6 +45,7 @@ export async function switchNetwork(rawProvider: any) {
       method: "wallet_switchEthereumChain",
       params: [{ chainId: ethers.toBeHex(POLYGON_CHAIN_ID) }],
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (switchError: any) {
     if (switchError.code === 4902) {
       await rawProvider.request({
@@ -64,35 +67,20 @@ export async function switchNetwork(rawProvider: any) {
 }
 
 export async function connectWallet(preferWalletConnect?: boolean): Promise<WalletSession> {
-  const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
   const shouldUseWalletConnect = preferWalletConnect || !window.ethereum;
 
-  let rawProvider: any;
-  let providerType: "injected" | "walletconnect" = "injected";
-
   if (shouldUseWalletConnect) {
-    if (!projectId) {
-      throw new Error("Missing NEXT_PUBLIC_WC_PROJECT_ID for WalletConnect");
-    }
-    rawProvider = await EthereumProvider.init({
-      projectId,
-      chains: [POLYGON_CHAIN_ID],
-      showQrModal: true,
-      rpcMap: {
-        [POLYGON_CHAIN_ID]: POLYGON_RPC,
-      },
-    });
-    providerType = "walletconnect";
-    await rawProvider.connect();
-  } else {
-    rawProvider = window.ethereum;
-    if (!rawProvider) {
-      throw new Error("No Ethereum wallet found. Please install MetaMask or use WalletConnect.");
-    }
+    throw new Error("WalletConnect should be handled via AppKit modal");
+  }
+
+  const rawProvider = window.ethereum;
+  if (!rawProvider) {
+    throw new Error("No Ethereum wallet found. Please install MetaMask.");
   }
 
   try {
     await rawProvider.request({ method: "eth_requestAccounts" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.code === 4001) {
       throw new Error("Connection rejected by user.");
@@ -115,6 +103,7 @@ export async function connectWallet(preferWalletConnect?: boolean): Promise<Wall
         params: [{ chainId: ethers.toBeHex(POLYGON_CHAIN_ID) }],
       });
       network = await provider.getNetwork();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (switchError: any) {
       if (switchError.code === 4902) {
         try {
@@ -143,14 +132,19 @@ export async function connectWallet(preferWalletConnect?: boolean): Promise<Wall
     chainId: Number(network.chainId),
     provider,
     rawProvider,
-    providerType,
+    providerType: "injected",
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function disconnectWallet(rawProvider?: any) {
   if (!rawProvider) return;
-  if (typeof rawProvider.disconnect === "function") {
-    await rawProvider.disconnect();
+  try {
+    if (typeof rawProvider.disconnect === "function") {
+      await rawProvider.disconnect();
+    }
+  } catch {
+    // ignore
   }
 }
 
@@ -195,8 +189,9 @@ export async function fetchOwnedTokenIds(provider: ethers.BrowserProvider, owner
   const contract = getContract(provider);
   try {
     const ids = await contract.walletOfOwner(owner);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ids.map((id: any) => id.toString());
-  } catch (error) {
+  } catch {
     try {
       const balance = await contract.balanceOf(owner);
       const total = Number(balance);
@@ -206,7 +201,7 @@ export async function fetchOwnedTokenIds(provider: ethers.BrowserProvider, owner
         tokenIds.push(tokenId.toString());
       }
       return tokenIds;
-    } catch (innerError) {
+    } catch {
       return scanTokensFromTransfers(owner);
     }
   }
@@ -235,6 +230,7 @@ async function getLogsAdaptive(params: {
       });
       params.onLogs(logs);
       from = to + 1;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error?.code === -32062 || String(error?.message).toLowerCase().includes("range is too large")) {
         const nextChunk = Math.max(minChunk, Math.floor(chunk / 2));
@@ -320,7 +316,7 @@ export async function fetchSampleTokenIds(limit: number) {
           tokenIds.push(tokenId.toString());
         }
         if (tokenIds.length >= count) return tokenIds;
-      } catch (e) {
+      } catch {
         tokenIds.length = 0;
         for (let i = 1; i <= count; i += 1) {
           tokenIds.push(i.toString());
@@ -328,7 +324,7 @@ export async function fetchSampleTokenIds(limit: number) {
         return tokenIds;
       }
     }
-  } catch (error) {
+  } catch {
     // Fallback
   }
   return [];
@@ -346,7 +342,7 @@ export async function fetchSampleMetadata(limit: number) {
       const data = await fetchTokenMetadata(tokenUri);
       results.push({ tokenId, data });
       if (results.length >= limit) break;
-    } catch (error) {
+    } catch {
       // Skip
     }
   }

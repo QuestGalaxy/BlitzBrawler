@@ -8,7 +8,7 @@ import { useGame } from "@/lib/game-context";
 import { Character, MatchEvent, MatchResult, Visuals, Tactic } from "@/lib/types";
 import { computeStats, deriveVisuals, getLevelFromXp } from "@/lib/traits";
 import { simulateMatch } from "@/game/simulateMatch";
-import { Zap, Target, Loader2, Activity, Shield, X, Goal, Sword, ShieldCheck, Flame, Scale } from "lucide-react";
+import { Zap, Target, Loader2, Activity, Shield, X, Goal, Sword, ShieldCheck, Flame, Scale, LucideIcon } from "lucide-react";
 import { soundManager } from "@/lib/audio";
 
 export default function MatchPage() {
@@ -147,12 +147,12 @@ export default function MatchPage() {
         clearTimeout(resultTimeoutRef.current);
       }
     };
-  }, [matchResult, progress, router, setLastMatch, setProgress]);
+  }, [matchResult, progress, router, setLastMatch, setProgress, matchCharacter]);
 
   if (!selectedCharacter) return null;
 
   if (!isReady) {
-    const tactics: { id: Tactic; name: string; icon: any; desc: string; stats: string }[] = [
+    const tactics: { id: Tactic; name: string; icon: LucideIcon; desc: string; stats: string }[] = [
       {
         id: "balanced",
         name: "Standard",

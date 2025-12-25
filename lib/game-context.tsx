@@ -1,6 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { BrowserProvider } from 'ethers';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   Character,
   MatchResult,
@@ -8,9 +10,6 @@ import {
   WalletState,
 } from "./types";
 import {
-  connectWallet,
-  disconnectWallet,
-  switchNetwork as web3SwitchNetwork,
   WalletSession,
 } from "./web3";
 import {
@@ -37,7 +36,56 @@ type GameContextValue = {
 
 const GameContext = createContext<GameContextValue | null>(null);
 
+function Web3ModalSync({ 
+  setWallet, 
+  setWalletSession,
+  setModalInstance 
+}: { 
+  setWallet: React.Dispatch<React.SetStateAction<WalletState>>,
+  setWalletSession: React.Dispatch<React.SetStateAction<WalletSession | null>>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setModalInstance: (modal: any) => void
+}) {
+  const modal = useWeb3Modal()
+  const { address, isConnected, chainId } = useWeb3ModalAccount()
+  const { walletProvider } = useWeb3ModalProvider()
+
+  useEffect(() => {
+    setModalInstance(modal)
+  }, [modal, setModalInstance])
+
+  useEffect(() => {
+    if (isConnected && address && walletProvider) {
+      const provider = new BrowserProvider(walletProvider)
+      setWallet({
+        address,
+        chainId: chainId || null,
+        status: "connected",
+        providerType: "walletconnect"
+      })
+      setWalletSession({
+        address,
+        chainId: chainId || 0,
+        provider,
+        rawProvider: walletProvider,
+        providerType: "walletconnect"
+      })
+    } else {
+      setWallet({
+        address: null,
+        chainId: null,
+        status: "disconnected",
+        providerType: null
+      })
+      setWalletSession(null)
+    }
+  }, [isConnected, address, chainId, walletProvider, setWallet, setWalletSession])
+
+  return null
+}
+
 export function GameProvider({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [wallet, setWallet] = useState<WalletState>({
     address: null,
     chainId: null,
@@ -45,9 +93,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     providerType: null,
   });
   const [walletSession, setWalletSession] = useState<WalletSession | null>(null);
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const modalRef = useRef<any>(null);
+
   const [progress, setProgress] = useState<Progress>(defaultProgress());
   const [selectedCharacter, setSelectedCharacterState] = useState<Character | null>(null);
   const [lastMatch, setLastMatch] = useState<MatchResult | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const saved = loadProgress(wallet.address);
@@ -95,41 +151,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     };
   }, [walletSession]);
 
-  const connect = async (preferWalletConnect?: boolean) => {
-    setWallet((prev) => ({ ...prev, status: "connecting" }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setModalInstance = useCallback((modal: any) => {
+    modalRef.current = modal;
+  }, []);
+
+  const connect = useCallback(async () => {
     try {
-      const session = await connectWallet(preferWalletConnect);
-      setWalletSession(session);
-      setWallet({
-        address: session.address,
-        chainId: session.chainId,
-        status: "connected",
-        providerType: session.providerType,
-      });
+      await modalRef.current?.open();
     } catch (error) {
-      setWallet((prev) => ({ ...prev, status: "disconnected" }));
-      throw error;
+      console.error("Connection error:", error);
     }
-  };
+  }, []);
 
-  const disconnect = async () => {
-    if (walletSession?.rawProvider) {
-      await disconnectWallet(walletSession.rawProvider);
-    }
-    setWallet({
-      address: null,
-      chainId: null,
-      status: "disconnected",
-      providerType: null,
-    });
-    setWalletSession(null);
-  };
+  const disconnect = useCallback(async () => {
+    await modalRef.current?.open({ view: 'Account' })
+  }, []);
 
-  const switchNetwork = async () => {
-    if (walletSession?.rawProvider) {
-      await web3SwitchNetwork(walletSession.rawProvider);
-    }
-  };
+  const switchNetwork = useCallback(async () => {
+    await modalRef.current?.open({ view: 'Networks' })
+  }, []);
 
   const setSelectedCharacter = (character: Character | null) => {
     setSelectedCharacterState(character);
@@ -149,10 +190,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       lastMatch,
       setLastMatch,
     }),
-    [wallet, walletSession, progress, selectedCharacter, lastMatch, switchNetwork, disconnect]
+    [wallet, walletSession, progress, selectedCharacter, lastMatch, connect, switchNetwork, disconnect]
   );
 
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+  return (
+    <GameContext.Provider value={value}>
+      {mounted && (
+        <Web3ModalSync 
+          setWallet={setWallet} 
+          setWalletSession={setWalletSession} 
+          setModalInstance={setModalInstance} 
+        />
+      )}
+      {children}
+    </GameContext.Provider>
+  );
 }
 
 export function useGame() {
