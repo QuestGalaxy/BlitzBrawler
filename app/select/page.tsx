@@ -36,7 +36,7 @@ export default function SelectPage() {
           progress.upgrades
         )
       )
-      .slice(0, 10);
+      .slice(0, 12);
   }, [guestMetadata, progress.upgrades]);
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function SelectPage() {
       setLoadingGuest(true);
       setGuestError(null);
       try {
-        const metadata = await fetchSampleMetadata(10);
+        const metadata = await fetchSampleMetadata(12);
         if (mounted) {
           setGuestMetadata(metadata);
           if (typeof window !== "undefined") {
