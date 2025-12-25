@@ -207,7 +207,7 @@ export async function fetchOwnedTokenIds(provider: ethers.BrowserProvider, owner
       }
       return tokenIds;
     } catch (innerError) {
-      return scanTokensFromTransfers(provider, owner);
+      return scanTokensFromTransfers(owner);
     }
   }
 }
@@ -249,7 +249,7 @@ async function getLogsAdaptive(params: {
   }
 }
 
-async function scanTokensFromTransfers(provider: ethers.BrowserProvider, owner: string) {
+async function scanTokensFromTransfers(owner: string) {
   const readProvider = getReadProvider();
   const currentBlock = await readProvider.getBlockNumber();
   const startBlock = Number(process.env.NEXT_PUBLIC_NFT_START_BLOCK || 0);
@@ -287,7 +287,7 @@ export async function fetchOwnedMetadata(provider: ethers.BrowserProvider, owner
   const contract = getContract(provider);
   const tokenIds = await fetchOwnedTokenIds(provider, owner);
   const settled = await Promise.allSettled(
-    tokenIds.map(async (tokenId) => {
+    tokenIds.map(async (tokenId: string) => {
       const tokenUri = await contract.tokenURI(tokenId);
       const data = await fetchTokenMetadata(tokenUri);
       return { tokenId, data };
