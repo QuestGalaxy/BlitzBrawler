@@ -27,6 +27,7 @@ export function defaultProgress(): Progress {
       agility: 0,
       stadiumFx: "Neon Wave",
     },
+    history: [],
   };
 }
 

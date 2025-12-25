@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import TopNav from "@/components/TopNav";
 import ArenaCanvas from "@/components/ArenaCanvas";
 import { useGame } from "@/lib/game-context";
-import { Character, MatchEvent, MatchResult, Visuals } from "@/lib/types";
+import { Character, MatchEvent, MatchResult, Visuals, Tactic } from "@/lib/types";
 import { computeStats, deriveVisuals, getLevelFromXp } from "@/lib/traits";
 import { simulateMatch } from "@/game/simulateMatch";
-import { Zap, Target, Loader2, Activity, Shield, X, Goal } from "lucide-react";
+import { Zap, Target, Loader2, Activity, Shield, X, Goal, Sword, ShieldCheck, Flame, Scale } from "lucide-react";
+import { soundManager } from "@/lib/audio";
 
 export default function MatchPage() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function MatchPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [goalPulse, setGoalPulse] = useState(0);
   const [arenaVisuals, setArenaVisuals] = useState<Visuals | null>(null);
+  const [tactic, setTactic] = useState<Tactic>("balanced");
+  const [isReady, setIsReady] = useState(false);
   const eventIndexRef = useRef(0);
   const eventsRef = useRef<MatchEvent[]>([]);
   const progressRef = useRef(progress);
@@ -36,6 +39,8 @@ export default function MatchPage() {
       router.replace("/select");
       return;
     }
+    if (!isReady) return;
+
     matchProgressRef.current = progressRef.current;
     const { stats, rarity } = computeStats(
       selectedCharacter.attributes,
@@ -51,13 +56,13 @@ export default function MatchPage() {
     const boostedCharacter = { ...selectedCharacter, stats, visuals, rarity };
     setArenaVisuals(visuals);
     setMatchCharacter(boostedCharacter);
-    const result = simulateMatch(boostedCharacter, progressRef.current);
+    const result = simulateMatch(boostedCharacter, progressRef.current, tactic);
     setMatchResult(result);
     eventsRef.current = result.events;
     eventIndexRef.current = 0;
     setScore({ player: 0, ai: 0 });
     setElapsed(0);
-  }, [selectedCharacter, router]);
+  }, [selectedCharacter, router, isReady, tactic]);
 
   useEffect(() => {
     if (!matchResult) return;
@@ -71,13 +76,16 @@ export default function MatchPage() {
         eventIndexRef.current += 1;
         if (currentEvent.kind === "goal") {
           setGoalPulse((pulse) => pulse + 1);
+          soundManager?.play("goal", "https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3", 0.4);
         }
         if (currentEvent.kind === "goal") {
           setMessage("GOAL!");
         } else if (currentEvent.kind === "save") {
           setMessage("SAVED!");
+          soundManager?.play("save", "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3", 0.3);
         } else {
           setMessage("MISS!");
+          soundManager?.play("miss", "https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3", 0.2);
         }
         if (currentEvent.kind === "goal") {
           setScore((prev) => ({
@@ -93,12 +101,26 @@ export default function MatchPage() {
 
       if (seconds >= matchResult.duration) {
         clearInterval(timer);
+        if (!matchCharacter) return;
+        
         const baseProgress = matchProgressRef.current;
         const newXp = baseProgress.xp + matchResult.xpEarned;
         const newWins = baseProgress.wins + (matchResult.winner === "player" ? 1 : 0);
         const newLosses = baseProgress.losses + (matchResult.winner === "ai" ? 1 : 0);
         const newLeague = Math.max(1, Math.floor(newWins / 3) + 1);
         const level = getLevelFromXp(newXp);
+        
+        const historyEntry = {
+          id: Math.random().toString(36).substring(2, 9),
+          timestamp: Date.now(),
+          playerScore: matchResult.playerScore,
+          aiScore: matchResult.aiScore,
+          winner: matchResult.winner,
+          xpEarned: matchResult.xpEarned,
+          tactic: matchResult.tactic,
+          characterName: matchCharacter.name,
+        };
+
         setProgress({
           ...baseProgress,
           xp: newXp,
@@ -106,6 +128,7 @@ export default function MatchPage() {
           losses: newLosses,
           league: newLeague,
           level,
+          history: [historyEntry, ...(baseProgress.history || [])].slice(0, 10),
         });
         setLastMatch(matchResult);
         if (resultTimeoutRef.current) {
@@ -126,7 +149,96 @@ export default function MatchPage() {
     };
   }, [matchResult, progress, router, setLastMatch, setProgress]);
 
-  if (!selectedCharacter || !matchResult || !matchCharacter) {
+  if (!selectedCharacter) return null;
+
+  if (!isReady) {
+    const tactics: { id: Tactic; name: string; icon: any; desc: string; stats: string }[] = [
+      {
+        id: "balanced",
+        name: "Standard",
+        icon: Scale,
+        desc: "Balanced attack and defense.",
+        stats: "All Stats 100%",
+      },
+      {
+        id: "offensive",
+        name: "Total Attack",
+        icon: Sword,
+        desc: "High pressure, vulnerable to counters.",
+        stats: "ATK +15% / DEF -15%",
+      },
+      {
+        id: "defensive",
+        name: "Park the Bus",
+        icon: ShieldCheck,
+        desc: "Solid defense, low scoring chance.",
+        stats: "DEF +15% / ATK -15%",
+      },
+      {
+        id: "aggressive",
+        name: "Full Blitz",
+        icon: Flame,
+        desc: "Chaotic play style. High risk/reward.",
+        stats: "ATK +25% / DEF -30%",
+      },
+    ];
+
+    return (
+      <main className="min-h-screen bg-brand-navy">
+        <TopNav />
+        <section className="max-w-4xl mx-auto px-4 py-12 animate-entrance">
+          <div className="text-center mb-10">
+            <h1 className="text-5xl md:text-7xl font-heading uppercase italic tracking-tighter mb-4">
+              Match <span className="text-brand-gold">Tactics</span>
+            </h1>
+            <p className="text-slate-400 uppercase tracking-widest text-sm font-bold">Select your approach for the upcoming clash</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4 mb-10">
+            {tactics.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTactic(t.id)}
+                className={`fifa-panel text-left transition-all group ${
+                  tactic === t.id ? "border-brand-gold bg-brand-gold/5" : "border-white/10 hover:border-white/30"
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-lg ${tactic === t.id ? "bg-brand-gold text-black" : "bg-white/5 text-white/60"}`}>
+                    <t.icon size={24} />
+                  </div>
+                  <div>
+                    <h3 className={`text-xl font-heading italic uppercase ${tactic === t.id ? "text-brand-gold" : "text-white"}`}>
+                      {t.name}
+                    </h3>
+                    <p className="text-sm text-slate-400 mb-2">{t.desc}</p>
+                    <span className="text-[10px] font-bold uppercase tracking-tighter px-2 py-0.5 bg-white/5 rounded text-brand-gold/80 border border-brand-gold/20">
+                      {t.stats}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                setIsReady(true);
+                soundManager?.play("click", "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3", 0.3);
+              }}
+              className="fifa-button px-16 text-2xl flex items-center gap-4 group"
+            >
+              Start Match
+              <Target className="group-hover:rotate-45 transition-transform" />
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (!matchResult || !matchCharacter) {
     return (
       <main className="min-h-screen">
         <TopNav />

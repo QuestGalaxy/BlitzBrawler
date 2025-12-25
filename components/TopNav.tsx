@@ -3,10 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import WalletButton from "./WalletButton";
-import { Trophy, Users, Sword, TrendingUp } from "lucide-react";
+import { Trophy, Users, Sword, TrendingUp, Volume2, VolumeX } from "lucide-react";
+import { soundManager } from "@/lib/audio";
+import { useState, useEffect } from "react";
 
 export default function TopNav() {
   const pathname = usePathname();
+  const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    if (soundManager) {
+      setMuted(soundManager.isMuted());
+    }
+  }, []);
+
+  const toggleMute = () => {
+    if (soundManager) {
+      setMuted(soundManager.toggleMute());
+    }
+  };
 
   const navItems = [
     { label: "Home", href: "/", icon: Trophy },
@@ -53,6 +68,13 @@ export default function TopNav() {
 
           {/* Wallet Actions */}
           <div className="flex items-center gap-4">
+            <button 
+              onClick={toggleMute}
+              className="p-2 text-white/40 hover:text-white transition-colors"
+              title={muted ? "Unmute" : "Mute"}
+            >
+              {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
             <div className="hidden sm:block">
               <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] text-right mb-1">
                 Polygon Mainnet

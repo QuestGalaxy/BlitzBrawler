@@ -253,7 +253,7 @@ export default function ArenaCanvas({
 
   useEffect(() => {
     const app = appRef.current;
-    if (!app) return;
+    if (!app || goalPulse === 0) return;
 
     const burst = new PIXI.Graphics();
     const centerX = app.screen.width / 2;
@@ -273,16 +273,35 @@ export default function ArenaCanvas({
     app.stage.addChild(burst);
 
     let alpha = 1;
-    const fade = () => {
-      alpha -= 0.05;
+    let shakeTimer = 0;
+    const shakeDuration = 20; // frames
+    const shakeIntensity = 8;
+    
+    const originalStagePos = { x: app.stage.x, y: app.stage.y };
+
+    const animate = () => {
+      alpha -= 0.04;
       burst.alpha = alpha;
-      burst.scale.set(1 + (1 - alpha) * 0.5);
-      if (alpha <= 0) {
+      burst.scale.set(1 + (1 - alpha) * 1.2);
+      
+      // Shake effect
+      if (shakeTimer < shakeDuration) {
+        app.stage.x = originalStagePos.x + (Math.random() - 0.5) * shakeIntensity;
+        app.stage.y = originalStagePos.y + (Math.random() - 0.5) * shakeIntensity;
+        shakeTimer++;
+      } else {
+        app.stage.x = originalStagePos.x;
+        app.stage.y = originalStagePos.y;
+      }
+
+      if (alpha <= 0 && shakeTimer >= shakeDuration) {
         app.stage.removeChild(burst);
-        app.ticker.remove(fade);
+        app.stage.x = originalStagePos.x;
+        app.stage.y = originalStagePos.y;
+        app.ticker.remove(animate);
       }
     };
-    app.ticker.add(fade);
+    app.ticker.add(animate);
   }, [goalPulse, aura]);
 
   return (

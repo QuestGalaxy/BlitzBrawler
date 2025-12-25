@@ -1,4 +1,4 @@
-import { Character, MatchEvent, MatchResult, Progress } from "@/lib/types";
+import { Character, MatchEvent, MatchResult, Progress, Tactic } from "@/lib/types";
 
 function randomBetween(min: number, max: number) {
   return Math.random() * (max - min) + min;
@@ -8,7 +8,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-export function simulateMatch(player: Character, progress: Progress): MatchResult {
+export function simulateMatch(player: Character, progress: Progress, tactic: Tactic = "balanced"): MatchResult {
   const duration = 12 + Math.floor(Math.random() * 6);
   const leagueBoost = 1 + progress.league * 0.05;
 
@@ -34,15 +34,46 @@ export function simulateMatch(player: Character, progress: Progress): MatchResul
     stamina: getTraitValue(["Stamina", "Endurance"], player.stats.stamina),
   };
 
+  // Apply Tactic Modifiers
+  let attackMod = 1.0;
+  let defenseMod = 1.0;
+  let eventFrequencyMod = 1.0;
+
+  switch (tactic) {
+    case "offensive":
+      attackMod = 1.15;
+      defenseMod = 0.85;
+      eventFrequencyMod = 1.1;
+      break;
+    case "defensive":
+      attackMod = 0.85;
+      defenseMod = 1.15;
+      eventFrequencyMod = 0.9;
+      break;
+    case "aggressive":
+      attackMod = 1.25;
+      defenseMod = 0.7;
+      eventFrequencyMod = 1.3;
+      break;
+    case "balanced":
+    default:
+      attackMod = 1.0;
+      defenseMod = 1.0;
+      eventFrequencyMod = 1.0;
+      break;
+  }
+
   const playerAttack =
-    traitStats.power * 0.35 +
-    traitStats.speed * 0.3 +
-    traitStats.agility * 0.25 +
-    traitStats.control * 0.1;
+    (traitStats.power * 0.35 +
+      traitStats.speed * 0.3 +
+      traitStats.agility * 0.25 +
+      traitStats.control * 0.1) *
+    attackMod;
   const playerDefense =
-    traitStats.strength * 0.5 +
-    traitStats.stamina * 0.3 +
-    traitStats.control * 0.2;
+    (traitStats.strength * 0.5 +
+      traitStats.stamina * 0.3 +
+      traitStats.control * 0.2) *
+    defenseMod;
   const playerRating = (playerAttack + playerDefense) / 2 + progress.level * 1.5;
 
   const aiMultiplier = clamp(0.9 + progress.league * 0.04 + randomBetween(-0.05, 0.08), 0.85, 1.2);
@@ -56,7 +87,7 @@ export function simulateMatch(player: Character, progress: Progress): MatchResul
     0.65
   );
 
-  const playCount = clamp(Math.round(duration / 2 + randomBetween(-1, 2)), 6, 10);
+  const playCount = clamp(Math.round((duration / 2 + randomBetween(-1, 2)) * eventFrequencyMod), 4, 12);
   const times = new Set<number>();
   while (times.size < playCount) {
     times.add(Math.floor(randomBetween(2, duration - 2)));
@@ -102,5 +133,6 @@ export function simulateMatch(player: Character, progress: Progress): MatchResul
     xpEarned,
     duration,
     events,
+    tactic,
   };
 }

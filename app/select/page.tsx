@@ -12,7 +12,7 @@ import { useGame } from "@/lib/game-context";
 import { Character } from "@/lib/types";
 import { fetchOwnedMetadata, fetchSampleMetadata, POLYGON_CHAIN_ID } from "@/lib/web3";
 import { loadSelectedCharacter } from "@/lib/storage";
-import { ChevronRight, Filter, Info, Loader2 } from "lucide-react";
+import { ChevronRight, Filter, Info, Loader2, History, Trophy, TrendingDown } from "lucide-react";
 
 export default function SelectPage() {
   const { wallet, walletSession, progress, selectedCharacter, setSelectedCharacter } = useGame();
@@ -153,6 +153,7 @@ export default function SelectPage() {
               options={[
                 { key: "guest", label: "Public Market" },
                 { key: "wallet", label: "My Collection" },
+                { key: "history", label: "Match Logs" },
               ]}
             />
           </div>
@@ -161,6 +162,61 @@ export default function SelectPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
             
+            {tab === "history" && (
+              <div className="space-y-4">
+                {progress.history && progress.history.length > 0 ? (
+                  progress.history.map((entry) => (
+                    <div key={entry.id} className="fifa-panel flex items-center justify-between group hover:border-brand-gold/50 transition-colors">
+                      <div className="flex items-center gap-6">
+                        <div className={`p-3 rounded bg-white/5 ${
+                          entry.winner === "player" ? "text-brand-gold" : 
+                          entry.winner === "ai" ? "text-red-400" : "text-slate-400"
+                        }`}>
+                          {entry.winner === "player" ? <Trophy size={24} /> : 
+                           entry.winner === "ai" ? <TrendingDown size={24} /> : <History size={24} />}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-heading italic uppercase text-lg">{entry.characterName}</span>
+                            <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
+                              {new Date(entry.timestamp).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`text-xs font-bold uppercase tracking-widest ${
+                              entry.winner === "player" ? "text-brand-gold" : "text-white/40"
+                            }`}>
+                              {entry.winner === "player" ? "Victory" : entry.winner === "ai" ? "Defeat" : "Draw"}
+                            </span>
+                            <span className="text-white/20">•</span>
+                            <span className="text-[10px] text-white/40 uppercase font-bold tracking-tighter">
+                              Tactic: {entry.tactic}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-8">
+                        <div className="text-center">
+                          <div className="text-[10px] font-bold text-white/20 uppercase tracking-widest leading-none mb-1">Score</div>
+                          <div className="text-2xl font-heading italic">{entry.playerScore} - {entry.aiScore}</div>
+                        </div>
+                        <div className="text-right min-w-[60px]">
+                          <div className="text-[10px] font-bold text-white/20 uppercase tracking-widest leading-none mb-1">XP</div>
+                          <div className="text-xl font-heading text-brand-gold italic">+{entry.xpEarned}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="fifa-panel text-center py-20">
+                    <History size={48} className="mx-auto text-slate-700 mb-4" />
+                    <h3 className="text-2xl font-heading uppercase italic">No history yet</h3>
+                    <p className="text-slate-500">Complete matches to see your career progress here.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {tab === "wallet" && wallet.status !== "connected" && (
               <div className="fifa-panel flex flex-col items-center text-center gap-6 py-12">
                 <div className="bg-white/5 p-6 rounded-full">

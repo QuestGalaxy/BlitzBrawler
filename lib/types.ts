@@ -43,6 +43,17 @@ export type UpgradeState = {
   stadiumFx: string;
 };
 
+export type MatchHistoryEntry = {
+  id: string;
+  timestamp: number;
+  playerScore: number;
+  aiScore: number;
+  winner: "player" | "ai" | "draw";
+  xpEarned: number;
+  tactic: Tactic;
+  characterName: string;
+};
+
 export type Progress = {
   xp: number;
   level: number;
@@ -50,6 +61,7 @@ export type Progress = {
   wins: number;
   losses: number;
   upgrades: UpgradeState;
+  history: MatchHistoryEntry[];
 };
 
 export type WalletState = {
@@ -58,6 +70,8 @@ export type WalletState = {
   status: "disconnected" | "connecting" | "connected";
   providerType: "injected" | "walletconnect" | null;
 };
+
+export type Tactic = "balanced" | "offensive" | "defensive" | "aggressive";
 
 export type MatchEvent = {
   time: number;
@@ -72,4 +86,5 @@ export type MatchResult = {
   xpEarned: number;
   duration: number;
   events: MatchEvent[];
+  tactic: Tactic;
 };
